@@ -1,3 +1,43 @@
+// Package signal implements a simple event dispatch system that allows
+// components within an application to communicate with each other in a
+// loosely coupled manner. It provides a SignalDispatcher which maintains
+// a mapping of signals (events) to callbacks that are to be executed when
+// a signal is emitted.
+//
+// A Signal in this context is a string identifier that represents a specific
+// type of event. Callback functions registered to a signal are called with
+// the signal and any accompanying data when that signal is emitted.
+//
+// Basic Usage:
+//
+// To use this package, start by creating a SignalDispatcher:
+//
+//	dispatcher := signal.NewSignalDispatcher()
+//
+// Then, register one or more callbacks to listen for specific signals:
+//
+//	dispatcher.Connect("order-created", func(signal signal.Signal, data interface{}) {
+//	    order, ok := data.(*models.Order)
+//	    if !ok {
+//	        fmt.Println("Invalid order data")
+//	        return
+//	    }
+//	    fmt.Printf("Received order created signal for order ID: %v\n", order.ID)
+//	})
+//
+// You can emit a signal anywhere in your application with any related data:
+//
+//	dispatcher.Emit("order-created", newOrder)
+//
+// This package ensures that all registered callbacks for a signal are executed
+// in parallel, which can help in improving the performance of operations
+// that are independent and can be processed concurrently.
+//
+// Note: This package uses goroutines to handle signals concurrently and it's
+// important to ensure that callbacks are thread-safe.
+//
+// This package is thread-safe and can be used concurrently across multiple
+// goroutines.
 package signal
 
 import (

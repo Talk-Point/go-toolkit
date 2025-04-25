@@ -59,8 +59,8 @@
 //	                    return &cli.DataDetails{
 //	                        Title: "User",
 //	                        Item: map[string]string{
-//	                            "id":       user.Id,
-//	                            "email":    user.Email,
+//	                            "id":      user.Id,
+//	                            "email":   user.Email,
 //	                        },
 //	                    }, nil
 //	                },
@@ -263,7 +263,7 @@ func (c *CliRoot[T]) runCommand(commands []*Command[T], args []string) (Data, er
 		}
 	}
 
-	return nil, fmt.Errorf("command " + filteredArgs[0] + " not found")
+	return nil, fmt.Errorf("command %s not found", filteredArgs[0])
 }
 
 func (c *CliRoot[T]) Help(commands []*Command[T]) (Data, error) {

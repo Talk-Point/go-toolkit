@@ -1,129 +1,304 @@
-# go-toolkit
+# Go Toolkit
 
-GoToolkit is a versatile utility library tailored to enhance the Go development workflow at Talk-Point.
+<div align="center">
 
-```sh
-$ go get github.com/Talk-Point/go-toolkit@latest
+![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
+[![License](https://img.shields.io/github/license/Talk-Point/go-toolkit?style=for-the-badge)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Talk-Point/go-toolkit?style=for-the-badge)](https://goreportcard.com/report/github.com/Talk-Point/go-toolkit)
+
+A comprehensive utility library designed to enhance Go development workflows with production-ready tools for CLI applications, web security, event handling, and more.
+
+</div>
+
+## ✨ Features
+
+- **🖥️ CLI Framework** - Build powerful command-line interfaces with nested commands, multiple output formats, and interactive input
+- **🔐 CAPTCHA Integration** - Ready-to-use Cloudflare Turnstile CAPTCHA client with testing mode
+- **📢 Event System** - Thread-safe signal dispatcher for decoupled component communication
+- **🎨 Formatters** - Human-readable time formatting utilities
+- **🛠️ Utilities** - Common helper functions for everyday Go development
+
+## 📦 Installation
+
+```bash
+go get github.com/Talk-Point/go-toolkit@latest
 ```
 
-## Modules
+## 🚀 Quick Start
 
-### CLI Helper
+### CLI Framework
 
-Package cli provides a framework for building command line interfaces with support for different output formats and nested commands. It allows easy creation and management of CLI commands, along with formatting outputs as JSON or plain text. This package supports command hierarchies and contextual execution.
+Build sophisticated command-line applications with support for nested commands, different output formats, and contextual execution:
 
 ```go
-import (
-	"context"
+package main
 
-	"github.com/Talk-Point/go-toolkit/pkg/v2/cli"
+import (
+    "fmt"
+    "github.com/Talk-Point/go-toolkit/pkg/v2/cli"
 )
 
-cmds := []*cli.Command[*Context]{
-    {
-        Use:     "version",
-        Short:   "Print the version",
-        Long:    "Print the version of the CLI",
-        Example: "version",
-        Run: func(cmd *cli.Command[*Context], args []string, ctx *Context) (cli.Data, error) {
-            return &cli.DataMessage{
-                Message: "Version: 1.0.0",
-            }, nil
+type AppContext struct {
+    Config string
+    Debug  bool
+}
+
+func main() {
+    ctx := &AppContext{Config: "app.conf"}
+    
+    commands := []*cli.Command[*AppContext]{
+        {
+            Use:   "version",
+            Short: "Print the version",
+            Run: func(cmd *cli.Command[*AppContext], args []string, ctx *AppContext) (cli.Data, error) {
+                return &cli.DataMessage{Message: "v1.0.0"}, nil
+            },
         },
         {
-			Use:   "users",
-			Short: "Manage users",
-			Long:  "Manage users in the system",
-			Commands: []*cli.Command[*Context]{
-				{
-					Use:     "list",
-					Short:   "List users",
-					Long:    "List all users in the system",
-					Example: "users list",
-					Run: func(cmd *cli.Command[*Context], args []string, ctx *Context) (cli.Data, error) {
-                        res, err := fetchUsers(ctx)
-                        if err != nil {
-							return nil, err
-						}
-						data := &cli.DataList{
-							Title: "Users",
-							Items: []map[string]string{},
-						}
-						for _, user := range res.Items {
-							data.Items = append(data.Items, map[string]string{
-								"id":    user.Id,
-								"email": user.Email,
-							})
-						}
-						return data, nil
-					},
-				},
-				{
-					Use:     "create",
-					Short:   "Create a user",
-					Long:    "Create a user in the system",
-					Example: "users create -username max.mustermann -email max.mustermann@talk-point.de",
-					Run: func(cmd *cli.Command[*Context], args []string, ctx *Context) (cli.Data, error) {
-                        user, err := createUser(ctx, args)
-                        if err != nil {
-                            return nil, err
-                        }
-                        return &cli.DataDetails{
-							Title: "User",
-							Item: map[string]string{
-								"id":       user.Id,
-								"email":    user.Email,
-							},
-						}, nil
-					},
-				},
-    },
-}
-
-ctx := &Context{
-    // the context
-}
-shell := cli.Cli[*Context](ctx, cmds)
-shell.Run()
-```
-
-### Captcha
-
-Package captcha provides a client for [Cloudflare Turnstile Captcha](https://www.cloudflare.com/products/turnstile/).
-
-The package allows you to create and verify captchas of different types. Currently, it supports two types of captchas: Turnstile and Testing. The Turnstile captcha is a real captcha that requires verification, while the Testing captcha is a dummy captcha used for testing purposes.
-
-Each captcha is represented by a Captcha struct, which contains the necessary information for captcha verification, such as the site key, secret, and the type of captcha.
-
-The package provides two functions for creating captchas: NewCaptchaTurnstile and NewCaptchaTesting. These functions return a pointer to a Captcha struct with the specified site key, secret, and type.
-
-The Captcha struct has a Verify method that takes a token and an IP address, and verifies the captcha based on its type. If the captcha type is not supported, the method returns an error.
-
-```go
-cfToken := c.FormValue("cf-turnstile-response")
-ip := c.RealIP()
-cap := captcha.NewCaptchaTurnstile(h.CaptchaConfig.SiteKey, h.CaptchaConfig.SecretKey)
-if cfToken == "" {
-    return Render(c, http.StatusOK, login.LoginForm(cap, h.AuthenticatorId, login.LoginErrors{
-        Email:              email,
-        InvalidCredentials: "Verification failed",
-    }))
+            Use:   "users",
+            Short: "Manage users",
+            Commands: []*cli.Command[*AppContext]{
+                {
+                    Use:   "list",
+                    Short: "List all users",
+                    Run: func(cmd *cli.Command[*AppContext], args []string, ctx *AppContext) (cli.Data, error) {
+                        return &cli.DataList{
+                            Title: "Active Users",
+                            Items: []map[string]string{
+                                {"id": "1", "name": "Alice", "role": "admin"},
+                                {"id": "2", "name": "Bob", "role": "user"},
+                            },
+                        }, nil
+                    },
+                },
+            },
+        },
+    }
+    
+    app := cli.Cli[*AppContext](ctx, commands)
+    app.Run()
 }
 ```
 
-### Signal
+### CAPTCHA Integration
 
-Package signal implements a simple event dispatch system that allows components within an application to communicate with each other in a loosely coupled manner. It provides a SignalDispatcher which maintains a mapping of signals (events) to callbacks that are to be executed when a signal is emitted.
-
-A Signal in this context is a string identifier that represents a specific type of event. Callback functions registered to a signal are called with the signal and any accompanying data when that signal is emitted.
+Integrate Cloudflare Turnstile CAPTCHA verification with ease:
 
 ```go
+import "github.com/Talk-Point/go-toolkit/pkg/v2/captcha"
+
+// Production mode with real Turnstile
+cap := captcha.NewCaptchaTurnstile(siteKey, secretKey)
+
+// Testing mode for development
+cap := captcha.NewCaptchaTesting("test-site-key", "test-secret")
+
+// Verify CAPTCHA token
+err := cap.Verify(token, clientIP)
+if err != nil {
+    // Handle verification failure
+}
+```
+
+### Event System
+
+Implement loosely coupled communication between components:
+
+```go
+import "github.com/Talk-Point/go-toolkit/pkg/v2/signal"
+
+// Create dispatcher
 dispatcher := signal.NewSignalDispatcher()
-dispatcher.Connect("order-created", func(signal signal.Signal, data interface{}) {
-    order, ok := data.(*models.Order)
-    if !ok {
-        fmt.Println("Invalid order data")
+
+// Register event handlers
+dispatcher.Connect("user.created", func(sig signal.Signal, data interface{}) {
+    user := data.(*User)
+    fmt.Printf("New user created: %s\n", user.Name)
+})
+
+dispatcher.Connect("user.created", func(sig signal.Signal, data interface{}) {
+    // Send welcome email
+})
+
+// Emit events
+dispatcher.Emit("user.created", &User{Name: "Alice"})
+```
+
+### Time Formatting
+
+Convert time values to human-readable formats:
+
+```go
+import "github.com/Talk-Point/go-toolkit/pkg/v2/formatter"
+
+// Format duration
+duration := formatter.TimePeriodHumanReadable(3665) // "1h 1m 5s"
+
+// Format relative time
+message := formatter.TimeAbsoluteFormatter(
+    time.Now().Add(-3*24*time.Hour), 
+    time.Now(),
+) // "3 days ago"
+```
+
+## 📚 Module Reference
+
+### CLI Package (`pkg/v2/cli`)
+
+The CLI package provides a comprehensive framework for building command-line applications:
+
+**Key Components:**
+- `Command[T]` - Generic command structure supporting custom contexts
+- `CliRoot[T]` - Root CLI handler with automatic help generation
+- Multiple `Data` types for structured output (`DataMessage`, `DataList`, `DataDetails`, `DataError`)
+- Built-in formatters (JSON, Text)
+- Interactive input collection with validation
+
+**Advanced Features:**
+```go
+// Interactive input with validation
+type UserInput struct {
+    Name     string `input:"name,required"`
+    Email    string `input:"email,required,email"`
+    Age      int    `input:"age,min=18,max=100"`
+}
+
+var input UserInput
+err := cli.Input(&input, os.Args[1:])
+
+// Custom output formatting
+app.SetFormatter(&cli.JSONFormatter{})
+```
+
+### CAPTCHA Package (`pkg/v2/captcha`)
+
+Provides a unified interface for CAPTCHA verification:
+
+**Features:**
+- Support for multiple CAPTCHA providers
+- Built-in Cloudflare Turnstile integration
+- Testing mode for development
+- Thread-safe verification
+
+**Example with HTTP handler:**
+```go
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+    token := r.FormValue("cf-turnstile-response")
+    ip := r.RemoteAddr
+    
+    if err := captcha.Verify(token, ip); err != nil {
+        // Show error - CAPTCHA verification failed
         return
     }
-})
+    
+    // Continue with login process
+}
 ```
+
+### Signal Package (`pkg/v2/signal`)
+
+A thread-safe event dispatcher for decoupled communication:
+
+**Features:**
+- Concurrent callback execution
+- Type-safe signal handling
+- Simple publish-subscribe pattern
+- No external dependencies
+
+**Advanced Usage:**
+```go
+// Define custom signals
+const (
+    SignalUserCreated   signal.Signal = "user.created"
+    SignalUserDeleted   signal.Signal = "user.deleted"
+    SignalOrderComplete signal.Signal = "order.complete"
+)
+
+// Type-safe event data
+type UserEvent struct {
+    UserID   string
+    Username string
+    Action   string
+}
+
+// Register multiple handlers
+dispatcher.Connect(SignalUserCreated, auditLogger)
+dispatcher.Connect(SignalUserCreated, emailNotifier)
+dispatcher.Connect(SignalUserCreated, analyticsTracker)
+```
+
+### Formatter Package (`pkg/v2/formatter`)
+
+Utilities for formatting time-related data:
+
+**Functions:**
+- `TimePeriodHumanReadable(seconds int32) string` - Formats duration in human-readable format
+- `TimeAbsoluteFormatter(date, reference time.Time) string` - Formats relative time
+
+**Examples:**
+```go
+// Duration formatting
+formatter.TimePeriodHumanReadable(90)     // "1m 30s"
+formatter.TimePeriodHumanReadable(3600)   // "1h"
+formatter.TimePeriodHumanReadable(86400)  // "1d"
+
+// Relative time
+now := time.Now()
+formatter.TimeAbsoluteFormatter(now.Add(-time.Hour), now)        // "1 hour ago"
+formatter.TimeAbsoluteFormatter(now.Add(time.Hour*24*7), now)    // "7 days from now"
+```
+
+### Shared Package (`pkg/v2/shared`)
+
+Common utility functions:
+
+**Available Functions:**
+- `Contains(element string, slice []string) bool` - Check if string exists in slice
+
+## 🏗️ Architecture
+
+The toolkit follows these design principles:
+
+- **Modularity**: Each package is independent and focused on a specific domain
+- **Zero Dependencies**: Minimal external dependencies for maximum compatibility
+- **Thread Safety**: Concurrent operations are safe where applicable
+- **Generic Support**: Modern Go generics for type-safe, reusable code
+- **Interface-Based**: Extensible design through well-defined interfaces
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+make test
+```
+
+Run tests with coverage:
+
+```bash
+go test -v -cover ./...
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🏢 About Talk-Point
+
+This toolkit is developed and maintained by [Talk-Point](https://talk-point.de), enhancing our Go development workflow across projects.
+
+---
+
+<div align="center">
+Made with ❤️ by Talk-Point
+</div>
